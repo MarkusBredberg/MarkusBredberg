@@ -1,3 +1,5 @@
+#Works for J=2,3,4 MLP
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -279,45 +281,21 @@ if True: # [0, 1], Batchnorm, J=4
         def __init__(self, input_channels, hidden_dim1=256, hidden_dim2=128, latent_dim=32):
             super(MLP_Encoder, self).__init__()
 
-            # Adjust conv_to_latent layers to match channel dimensions correctly
             self.conv_to_latent = nn.Sequential(
-                nn.Conv2d(input_channels, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),
+                # Block 1: Two convolutional layers, downsample once
+                nn.Conv2d(input_channels, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
                 nn.BatchNorm2d(hidden_dim2),
                 nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
                 nn.BatchNorm2d(hidden_dim2),
                 nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True),  # Downsampling layer
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True), # Downsampling layer
                 nn.BatchNorm2d(hidden_dim2),
                 nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim2, hidden_dim1, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(hidden_dim1),
-                nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim1, hidden_dim1, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(hidden_dim1),
-                nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim1, hidden_dim1, kernel_size=3, stride=2, padding=1, bias=True),  # Downsampling layer
-                nn.BatchNorm2d(hidden_dim1),
-                nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim1, hidden_dim1, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(hidden_dim1),
-                nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim1, hidden_dim1, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(hidden_dim1),
-                nn.LeakyReLU(0.2),
-
-                nn.Conv2d(hidden_dim1, hidden_dim1, kernel_size=2, bias=True)  # Final layer
             )
 
 
-            self.FC_input = nn.Linear(hidden_dim1, hidden_dim1, bias=True)
+            self.FC_input = nn.Linear(hidden_dim2*4*4, hidden_dim1, bias=True)
             self.bn1 = nn.BatchNorm1d(hidden_dim1)
             
             self.FC_hidden = nn.Linear(hidden_dim1, hidden_dim2, bias=True)
@@ -340,101 +318,7 @@ if True: # [0, 1], Batchnorm, J=4
             logvar = self.FC_var(h)
             return mean, logvar
         
-    class CNN_Encoder(nn.Module):
-        def __init__(self, latent_dim):
-            super(CNN_Encoder, self).__init__()
-            
-            # Convolutional blocks: Each block has three layers, but we keep the same number of max-poolings
-            self.conv_layers = nn.Sequential(
-                # Block 1: Input -> 32 x 64 x 64
-                nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2, bias=True),
-                nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 64 x 64
-
-                # Block 2: 32 x 32 x 32
-                nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2, bias=True),
-                nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 32 x 32
-
-                # Block 3: 64 x 16 x 16
-                nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2, bias=True),
-                nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 16 x 16
-
-                # Block 4: 128 x 8 x 8
-                nn.Conv2d(128, 256, kernel_size=5, stride=1, padding=2, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 256 x 8 x 8
-
-                # Block 5: 256 x 8 x 8 (No MaxPooling)
-                nn.Conv2d(256, 256, kernel_size=5, stride=1, padding=2, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-
-                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2)  # Switched to LeakyReLU
-            )
-            
-            # Additional convolutional layers to reduce dimensions
-            self.conv_to_latent = nn.Sequential(
-                nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),  # Output: (hidden_dim2, 4, 4)
-                nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),  # Output: (hidden_dim1, 2, 2)
-                nn.BatchNorm2d(384),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.Conv2d(384, latent_dim, kernel_size=2, bias=True)  # Output: (latent_dim, 1, 1)
-            )
-            
-            # Fully connected layers for latent space representation
-            self.fc_layers = MLP_Encoder(input_channels=256, hidden_dim1=384, hidden_dim2=256, latent_dim=latent_dim)
-
-        def forward(self, x):
-            x = self.conv_layers(x)
-            mean, logvar = self.fc_layers(x)
-            return mean, logvar
-        
+      
     class Dual_Encoder(nn.Module):
         def __init__(self, scatshape, latent_dim):
             super(Dual_Encoder, self).__init__()
@@ -555,7 +439,443 @@ if True: # [0, 1], Batchnorm, J=4
             logvar = self.FC_var(h)
             return mean, logvar
         
+if False: # [0, 1], Batchnorm, J=3
+    class MLP_Encoder(nn.Module):    
+            def __init__(self, input_channels, hidden_dim1=256, hidden_dim2=128, latent_dim=32):
+                super(MLP_Encoder, self).__init__()
+
+                self.conv_to_latent = nn.Sequential(
+                    # Block 1: Two convolutional layers, downsample once
+                    nn.Conv2d(input_channels, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                    nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                    nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True), # Downsampling layer
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                    
+                    # Block 2: Two convolutional layers, downsample once
+                    nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True), 
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                    nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True), 
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                    nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True), # Downsampling layer
+                    nn.BatchNorm2d(hidden_dim2),
+                    nn.LeakyReLU(0.2),
+                )
+
+
+                # Adjust this after knowing the output shape of the conv layers
+                self.FC_input = nn.Linear(hidden_dim2*4*4, hidden_dim1, bias=True)
+                self.bn1 = nn.BatchNorm1d(hidden_dim1)
+                self.FC_hidden = nn.Linear(hidden_dim1, hidden_dim2, bias=True)
+                self.bn2 = nn.BatchNorm1d(hidden_dim2)
+                self.FC_mean = nn.Linear(hidden_dim2, latent_dim)
+                self.FC_var = nn.Linear(hidden_dim2, latent_dim)
+
+                self.LeakyReLU = nn.LeakyReLU(0.2)
+                self.dropout = nn.Dropout(0.3)
+
+            def forward(self, x):
+                h = self.conv_to_latent(x)
+                h = h.view(h.size(0), -1)  # Flatten the output
+                h = self.LeakyReLU(self.bn1(self.FC_input(h)))
+                h = self.dropout(h)
+                h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))
+                h = self.dropout(h)
+                mean = self.FC_mean(h)
+                logvar = self.FC_var(h)
+                return mean, logvar
+
+    
+    class Dual_Encoder(nn.Module):
+        def __init__(self, scatshape, latent_dim):
+            super(Dual_Encoder, self).__init__()
+            self.cnn_encoder = nn.Sequential(
+                # Block 1: Input -> 32 x 64 x 64
+                nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 64 x 64
+
+                # Block 2: 32 x 32 x 32
+                nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 32 x 32
+
+                # Block 3: 64 x 16 x 16
+                nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 16 x 16
+
+                # Block 4: 128 x 8 x 8
+                nn.Conv2d(128, 256, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2)  # Output: 256 x 8 x 8
+            )
+            
+            self.conv_to_latent_img = nn.Sequential(
+                nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(384),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+            )
+            
+            self.conv_to_latent_scat = nn.Sequential(
+                nn.Conv2d(scatshape[-3], 256, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(384),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+            )
+            
+            self.FC_input = nn.Linear(768, 384, bias=True)  # Update input size
+            self.bn1 = nn.BatchNorm1d(384)
+            
+            self.FC_hidden = nn.Linear(384, 256, bias=True)
+            self.bn2 = nn.BatchNorm1d(256)
+            
+            self.FC_mean = nn.Linear(256, latent_dim, bias=True)
+            self.FC_var = nn.Linear(256, latent_dim, bias=True)
+            
+            self.LeakyReLU = nn.LeakyReLU(0.2)
+            self.dropout = nn.Dropout(0.3)
+
+        def forward(self, img, scat):
+            cnn_features = self.cnn_encoder(img)
+            img_h = self.conv_to_latent_img(cnn_features)
+            scat_h = self.conv_to_latent_scat(scat)
+            h = torch.cat((img_h, scat_h), dim=1)    
+            h = h.view(h.size(0), -1)
+            h = self.LeakyReLU(self.bn1(self.FC_input(h)))
+            h = self.dropout(h)
+            h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))
+            h = self.dropout(h)
+            mean = self.FC_mean(h)
+            logvar = self.FC_var(h)
+            return mean, logvar
+
         
+if False: # [0, 1], Batchnorm, J=2
+    class MLP_Encoder(nn.Module):    
+        def __init__(self, input_channels, hidden_dim1=256, hidden_dim2=128, latent_dim=32):
+            super(MLP_Encoder, self).__init__()
+
+            self.conv_to_latent = nn.Sequential(
+                # Block 1: Two convolutional layers, downsample once
+                nn.Conv2d(input_channels, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True), 
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True),  # Downsampling layer 32x32 -> 16x16
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                
+                # Block 2: Two convolutional layers, downsample once
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True), # Downsampling layer 16x16 -> 8x8
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+
+                # Block 3: Two convolutional layers, downsample once
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=1, padding=1, bias=True),  
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(hidden_dim2, hidden_dim2, kernel_size=3, stride=2, padding=1, bias=True),  # Downsampling layer
+                nn.BatchNorm2d(hidden_dim2),
+                nn.LeakyReLU(0.2)
+            )
+
+
+            # Adjust this after knowing the output shape of the conv layers
+            self.FC_input = nn.Linear(hidden_dim2*4*4, hidden_dim1, bias=True)
+            self.bn1 = nn.BatchNorm1d(hidden_dim1)
+            self.FC_hidden = nn.Linear(hidden_dim1, hidden_dim2, bias=True)
+            self.bn2 = nn.BatchNorm1d(hidden_dim2)
+            self.FC_mean = nn.Linear(hidden_dim2, latent_dim)
+            self.FC_var = nn.Linear(hidden_dim2, latent_dim)
+
+            self.LeakyReLU = nn.LeakyReLU(0.2)
+            self.dropout = nn.Dropout(0.3)
+
+        def forward(self, x):
+            h = self.conv_to_latent(x)
+            h = h.view(h.size(0), -1)  # Flatten the output
+            h = self.LeakyReLU(self.bn1(self.FC_input(h)))
+            h = self.dropout(h)
+            h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))
+            h = self.dropout(h)
+            mean = self.FC_mean(h)
+            logvar = self.FC_var(h)
+            return mean, logvar
+
+
+
+    class Dual_Encoder(nn.Module):
+        def __init__(self, scatshape, latent_dim):
+            super(Dual_Encoder, self).__init__()
+            self.cnn_encoder = nn.Sequential(
+                # Block 1: Input -> 32 x 128 x 128 (for J=2 larger input size)
+                nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 64 x 64
+
+                # Block 2: 32 x 64 x 64
+                nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 32 x 32
+
+                # Block 3: 64 x 32 x 32
+                nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 16 x 16
+
+                # Block 4: 128 x 16 x 16
+                nn.Conv2d(128, 256, kernel_size=5, stride=1, padding=2, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2)  # Output: 256 x 8 x 8
+            )
+            
+            self.conv_to_latent_img = nn.Sequential(
+                nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(384),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+            )
+            
+            self.conv_to_latent_scat = nn.Sequential(
+                nn.Conv2d(scatshape[-3], 256, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(256),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.BatchNorm2d(384),
+                nn.LeakyReLU(0.2),
+
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+            )
+            
+            self.FC_input = nn.Linear(768, 384, bias=True)  # Update input size
+            self.bn1 = nn.BatchNorm1d(384)
+            
+            self.FC_hidden = nn.Linear(384, 256, bias=True)
+            self.bn2 = nn.BatchNorm1d(256)
+            
+            self.FC_mean = nn.Linear(256, latent_dim, bias=True)
+            self.FC_var = nn.Linear(256, latent_dim, bias=True)
+            
+            self.LeakyReLU = nn.LeakyReLU(0.2)
+            self.dropout = nn.Dropout(0.3)
+
+        def forward(self, img, scat):
+            cnn_features = self.cnn_encoder(img)
+            img_h = self.conv_to_latent_img(cnn_features)
+            scat_h = self.conv_to_latent_scat(scat)
+            h = torch.cat((img_h, scat_h), dim=1)    
+            h = h.view(h.size(0), -1)
+            h = self.LeakyReLU(self.bn1(self.FC_input(h)))
+            h = self.dropout(h)
+            h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))
+            h = self.dropout(h)
+            mean = self.FC_mean(h)
+            logvar = self.FC_var(h)
+            return mean, logvar
+
+    
+#Works for all choices of J
+class CNN_Encoder(nn.Module):
+    def __init__(self, latent_dim):
+        super(CNN_Encoder, self).__init__()
+        
+        # Convolutional blocks: Each block has three layers, but we keep the same number of max-poolings
+        self.conv_layers = nn.Sequential(
+            # Block 1: Input -> 32 x 64 x 64
+            nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2, bias=True),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 64 x 64
+
+            # Block 2: 32 x 32 x 32
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2, bias=True),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 32 x 32
+
+            # Block 3: 64 x 16 x 16
+            nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2, bias=True),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 16 x 16
+
+            # Block 4: 128 x 8 x 8
+            nn.Conv2d(128, 256, kernel_size=5, stride=1, padding=2, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 256 x 8 x 8
+
+            # Block 5: 256 x 8 x 8 (No MaxPooling)
+            nn.Conv2d(256, 256, kernel_size=5, stride=1, padding=2, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2)  # Switched to LeakyReLU
+        )
+        
+        # Additional convolutional layers to reduce dimensions
+        self.conv_to_latent = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),  # Output: (hidden_dim2, 4, 4)
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),  # Output: (hidden_dim1, 2, 2)
+            nn.BatchNorm2d(384),
+            nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+            nn.Conv2d(384, latent_dim, kernel_size=2, bias=True)  # Output: (latent_dim, 1, 1)
+        )
+        
+        # Fully connected layers for latent space representation
+        self.fc_layers = MLP_Encoder(input_channels=256, hidden_dim1=384, hidden_dim2=256, latent_dim=latent_dim)
+
+    def forward(self, x):
+        x = self.conv_layers(x)
+        mean, logvar = self.fc_layers(x)
+        return mean, logvar  
     
 class CNN_Decoder(nn.Module):
     def __init__(self, latent_dim, intermediate_dim=256):
