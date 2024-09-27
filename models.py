@@ -318,102 +318,96 @@ if True: # [0, 1], Batchnorm, J=4
             logvar = self.FC_var(h)
             return mean, logvar
         
-      
     class Dual_Encoder(nn.Module):
         def __init__(self, scatshape, latent_dim):
             super(Dual_Encoder, self).__init__()
             self.cnn_encoder = nn.Sequential(
-                # Block 1: Input -> 32 x 64 x 64
                 nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2, bias=True),
                 nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 64 x 64
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-                # Block 2: 32 x 32 x 32
                 nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2, bias=True),
                 nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(64),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 32 x 32
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-                # Block 3: 64 x 16 x 16
                 nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2, bias=True),
                 nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 16 x 16
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-                # Block 4: 128 x 8 x 8
                 nn.Conv2d(128, 256, kernel_size=5, stride=1, padding=2, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 256 x 8 x 8
+                nn.LeakyReLU(0.2),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-                # Block 5: 256 x 8 x 8 (No MaxPooling)
                 nn.Conv2d(256, 256, kernel_size=5, stride=1, padding=2, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
 
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2)  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2)
             )
             
             self.conv_to_latent_img = nn.Sequential(
                 nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
                 nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
                 nn.BatchNorm2d(384),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)
             )
             
             self.conv_to_latent_scat = nn.Sequential(
                 nn.Conv2d(scatshape[-3], 256, kernel_size=3, stride=2, padding=1, bias=True),
                 nn.BatchNorm2d(256),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
+                nn.LeakyReLU(0.2),
                 nn.Conv2d(256, 384, kernel_size=3, stride=2, padding=1, bias=True),
                 nn.BatchNorm2d(384),
-                nn.LeakyReLU(0.2),  # Switched to LeakyReLU
-                nn.Conv2d(384, 384, kernel_size=2, bias=True)  # To reduce to (batchsize, n, 1, 1)
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(384, 384, kernel_size=2, bias=True)
             )
             
-            self.FC_input = nn.Linear(768, 384, bias=True)  # Update input size
+            self.FC_input = nn.Linear(768, 384, bias=True)
             self.bn1 = nn.BatchNorm1d(384)
             
             self.FC_hidden = nn.Linear(384, 256, bias=True)
@@ -433,11 +427,12 @@ if True: # [0, 1], Batchnorm, J=4
             h = h.view(h.size(0), -1)
             h = self.LeakyReLU(self.bn1(self.FC_input(h)))
             h = self.dropout(h)
-            h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))  # Replaced LayerNorm with BatchNorm1d
+            h = self.LeakyReLU(self.bn2(self.FC_hidden(h)))
             h = self.dropout(h)
             mean = self.FC_mean(h)
             logvar = self.FC_var(h)
             return mean, logvar
+
         
 if False: # [0, 1], Batchnorm, J=3
     class MLP_Encoder(nn.Module):    
